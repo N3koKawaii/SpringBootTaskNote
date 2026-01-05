@@ -1,6 +1,7 @@
 package com.example.tasknote.tasknote.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -8,6 +9,7 @@ import com.example.tasknote.tasknote.exception.ResourceNotFoundException;
 import com.example.tasknote.tasknote.model.AppUser;
 import com.example.tasknote.tasknote.model.Note;
 import com.example.tasknote.tasknote.model.Todo;
+import com.example.tasknote.tasknote.model_enum.NoteType;
 import com.example.tasknote.tasknote.repository.NoteRepository;
 import com.example.tasknote.tasknote.requestDto.NoteCreateRequest;
 import com.example.tasknote.tasknote.responseDto.NoteResponseDTO;
@@ -50,6 +52,14 @@ public class NoteService {
                 .toList();
     }
 
+    // List notes by type
+    public List<NoteResponseDTO> listAllNotesByType(AppUser user, NoteType type){
+        return noteRepository.findAllByUserAndType(user, type)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
     // **************
     // DATA CREATION
     // **************
@@ -65,6 +75,25 @@ public class NoteService {
         return toResponseDTO(noteRepository.save(note));
     }
 
+    // Update a note
+    public NoteResponseDTO updateNote(Long id, NoteCreateRequest noteCreateRequest, AppUser user, Todo todo){
+        Note note = noteRepository.findByIdAndUser(id, user)
+                    .orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+        
+        note.setTitle(noteCreateRequest.getTitle());
+        note.setDescription(noteCreateRequest.getDescription());
+        note.setType(noteCreateRequest.getType());
+        note.setTodo(todo);
+        return toResponseDTO(noteRepository.save(note));
+    }
+
+    // Delete a note
+    public void deleteNote(Long id, AppUser user){
+        Note note = noteRepository.findByIdAndUser(id, user)
+                    .orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+        noteRepository.delete(note);
+    }
+
     // **************
     // DATA CONVERSION
     // **************
@@ -76,7 +105,7 @@ public class NoteService {
         dto.setTitle(note.getTitle());
         dto.setDescription(note.getDescription());
         dto.setType(note.getType());
-        dto.setTodoId(note.getTodo().getId());
+        dto.setTodoId(note.getTodo() != null ? note.getTodo().getId() : null);
         dto.setCreatedAt(note.getCreatedAt());
         return dto;
     }

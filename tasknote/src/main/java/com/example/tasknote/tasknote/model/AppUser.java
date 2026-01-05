@@ -72,7 +72,6 @@ public class AppUser extends BaseEntity{
         sb.append("AppUser{");
         sb.append("username=").append(username);
         sb.append(", email=").append(email);
-        sb.append(", password=").append(password);
         sb.append(", role=").append(role);
         sb.append(", enabled=").append(enabled);
         sb.append('}');

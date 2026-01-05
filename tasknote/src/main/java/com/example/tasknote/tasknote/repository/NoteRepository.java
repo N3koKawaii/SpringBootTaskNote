@@ -8,11 +8,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.tasknote.tasknote.model.AppUser;
 import com.example.tasknote.tasknote.model.Note;
 import com.example.tasknote.tasknote.model.Todo;
+import com.example.tasknote.tasknote.model_enum.NoteType;
 
 public interface NoteRepository extends JpaRepository<Note, Long>{
     List<Note> findAllByUser(AppUser user);
 
     List<Note> findAllByUserAndTodo(AppUser user, Todo todo);
+
+    List<Note> findAllByUserAndType(AppUser user, NoteType type);
 
     Optional<Note> findByIdAndUser(Long id, AppUser user);
 }

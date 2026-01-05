@@ -7,8 +7,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 
 import com.example.tasknote.tasknote.model.AppUser;
+import com.example.tasknote.tasknote.model.Note;
 import com.example.tasknote.tasknote.model.Todo;
+import com.example.tasknote.tasknote.model_enum.NoteType;
 import com.example.tasknote.tasknote.model_enum.Role;
+import com.example.tasknote.tasknote.repository.NoteRepository;
 import com.example.tasknote.tasknote.repository.TodoRepository;
 import com.example.tasknote.tasknote.repository.UserRepository;
 
@@ -20,6 +23,9 @@ public class DataInitializer implements CommandLineRunner{
     
     @Autowired
     public TodoRepository todoRepository;
+
+    @Autowired
+    public NoteRepository noteRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -36,8 +42,21 @@ public class DataInitializer implements CommandLineRunner{
         Todo todo5 = new Todo("Fifth Todo", "This is the fifth todo", user1);
         Todo todo6 = new Todo("Sixth Todo", "This is the sixth todo", user2);
 
+        // Add Note
+        Note note1 = new Note("First Note", "This is the first note", null, NoteType.STANDALONE, user1);
+        Note note2 = new Note("Second Note", "This is the second note", null, NoteType.STANDALONE, user2);
+        Note note3 = new Note("Third Note", "This is the third note", null, NoteType.STANDALONE, user1);
+        Note note4 = new Note("Fourth Note", "This is the fourth note", todo1, NoteType.TODO_NOTE, user2);
+        Note note5 = new Note("Fifth Note", "This is the fifth note", todo1, NoteType.TODO_NOTE, user1);
+        Note note6 = new Note("Sixth Note", "This is the sixth note", todo3, NoteType.TODO_NOTE, user1);
+        Note note7 = new Note("Seventh Note", "This is the seventh note", todo2, NoteType.TODO_NOTE, user2);
+        Note note8 = new Note("Eighth Note", "This is the eighth note", todo2, NoteType.TODO_NOTE, user2);
+        Note note9 = new Note("Ninth Note", "This is the ninth note", todo4, NoteType.TODO_NOTE, user2);
+
         userRepository.saveAll(List.of( admin, user1, user2 ));
         todoRepository.saveAll(List.of(todo1, todo2, todo3, todo4, todo5, todo6));
+        noteRepository.saveAll(List.of( note1, note2, note3, note4, note5, note6, note7, note8, note9 ));
+
 
     }
 }

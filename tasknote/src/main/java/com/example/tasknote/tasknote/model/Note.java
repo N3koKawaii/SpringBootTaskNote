@@ -1,5 +1,7 @@
 package com.example.tasknote.tasknote.model;
 
+import java.util.Optional;
+
 import com.example.tasknote.tasknote.model_enum.NoteType;
 
 import jakarta.persistence.Column;
@@ -26,7 +28,7 @@ public class Note extends BaseEntity{
     @JoinColumn(name="user_id", nullable=false)
     private AppUser user;
 
-    @ManyToOne(fetch=FetchType.LAZY, optional=false)
+    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="todo_id")
     private Todo todo;
 
@@ -35,6 +37,7 @@ public class Note extends BaseEntity{
     }
 
     public Note(String title, String description, Todo todo, NoteType type, AppUser user) {
+        super();
         this.title = title;
         this.description = description;
         this.todo = todo;
