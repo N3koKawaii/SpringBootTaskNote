@@ -1,5 +1,6 @@
 package com.example.tasknote.tasknote.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -19,10 +20,13 @@ import jakarta.transaction.Transactional;
 @Service
 @Transactional
 public class TodoService {
+
+    private final NoteService noteService;
     private final TodoRepository todoRepository;
 
-    public TodoService(TodoRepository todoRepository) {
+    public TodoService(TodoRepository todoRepository, NoteService noteService) {
         this.todoRepository = todoRepository;
+        this.noteService = noteService;
     }
 
     // **************
@@ -31,7 +35,7 @@ public class TodoService {
 
     // Get all todos for a user
     public List<TodoResponseDTO> getAllTodos(AppUser user){
-        return todoRepository.findAllByUser(user)
+        return todoRepository.findAllByUserWithNotes(user)
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -73,10 +77,10 @@ public class TodoService {
         Todo todo = new Todo();
         todo.setTitle(todoRequest.getTitle());
         todo.setDescription(todoRequest.getDescription());
-        todo.setPriority(todoRequest.getPriority());
-        todo.setStatus(Status.PENDING);
-        todo.setStart_date(todoRequest.getStartDate());
-        todo.setEnd_date(todoRequest.getEndDate());
+        todo.setPriority(todoRequest.getPriority() != null ? todoRequest.getPriority() : Priority.LOW);
+        todo.setStatus(todoRequest.getStatus() != null ? todoRequest.getStatus() : Status.PENDING);
+        todo.setStartAt(todoRequest.getStartDate());
+        todo.setEndAt(todoRequest.getEndDate());
         todo.setUser(user);
 
         return toResponseDTO(todoRepository.save(todo));
@@ -90,19 +94,25 @@ public class TodoService {
         todo.setTitle(todoRequest.getTitle());
         todo.setDescription(todoRequest.getDescription());
         todo.setPriority(todoRequest.getPriority());
-        todo.setStatus(Status.PENDING);
-        todo.setStart_date(todoRequest.getStartDate() != null ? todoRequest.getStartDate() : todo.getStart_date());
-        todo.setEnd_date(todoRequest.getEndDate() != null ? todoRequest.getEndDate() : todo.getEnd_date());
-        todo.setUser(user);
+        if (todoRequest.getStatus() != null) {
+            todo.setStatus(todoRequest.getStatus());
+        }
+        if (todoRequest.getStartDate() != null) {
+            todo.setStartAt(todoRequest.getStartDate());
+        }
+        if (todoRequest.getEndDate() != null) {
+            todo.setEndAt(todoRequest.getEndDate());
+        }
 
-        return toResponseDTO(todoRepository.save(todo));
+        return toResponseDTO(todo);
     }
 
     // Delete a todo
     public void deleteTodo(Long id, AppUser user){
-        Todo todo = todoRepository.findByIdAndUser(id, user)
-                .orElseThrow(() -> new ResourceNotFoundException("Todo not found"));
-        todoRepository.delete(todo);
+        if (!todoRepository.existsByIdAndUser(id, user)) {
+            throw new ResourceNotFoundException("Todo not found");
+        }
+        todoRepository.deleteById(id);
     }
 
 
@@ -114,18 +124,22 @@ public class TodoService {
     // **************
 
     // Convert Todo entity to TodoResponseDTO
-    private TodoResponseDTO toResponseDTO(Todo todo){
+    public TodoResponseDTO toResponseDTO(Todo todo){
         TodoResponseDTO dto = new TodoResponseDTO();
         dto.setId(todo.getId());
         dto.setTitle(todo.getTitle());
         dto.setDescription(todo.getDescription());
         dto.setStatus(todo.getStatus());
         dto.setPriority(todo.getPriority());
-        dto.setStartDate(todo.getStart_date());
-        dto.setEndDate(todo.getEnd_date());
+        dto.setStartDate(todo.getStartAt());
+        dto.setEndDate(todo.getEndAt());
         dto.setCreatedAt(todo.getCreatedAt());
         dto.setUpdatedAt(todo.getUpdatedAt());
-        dto.setNotes(null);
+        dto.setNotes(
+            todo.getNotes()
+                .stream()
+                .map(note -> noteService.toResponseDTO(note))
+                .toList());
         return dto;
     }
 

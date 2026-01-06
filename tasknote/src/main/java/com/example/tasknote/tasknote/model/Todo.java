@@ -18,13 +18,18 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name="todo")
 public class Todo extends BaseEntity{
     @Column(nullable=false)
+    @NotBlank
+    @Size(max=255)
     private String title;
 
+    @Size(max = 1000)
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -35,10 +40,8 @@ public class Todo extends BaseEntity{
     @Column(nullable=false)
     private Priority priority = Priority.LOW;
 
-    private LocalDateTime start_date;
-    private LocalDateTime end_date;
-    
-    private LocalDateTime deleted_at;
+    private LocalDateTime startAt;
+    private LocalDateTime endAt;
 
     
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
@@ -55,92 +58,65 @@ public class Todo extends BaseEntity{
     public Todo(){
         super();
     }
-
-    public Todo(String title, String description, AppUser user){
-        super();
-        this.title = title;
-        this.description = description;
-        this.user = user;
-    }
-
-    public Todo(String title, String description, LocalDateTime end_date, Priority priority, LocalDateTime start_date, Status status, LocalDateTime deleted_at, AppUser user) {
-        super();
-        this.title = title;
-        this.description = description;
-        this.end_date = end_date;
-        this.priority = priority;
-        this.start_date = start_date;
-        this.status = status;
-        this.deleted_at = deleted_at;
-        this.user = user;
-    }
-
+    
     public String getTitle() {
         return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public Priority getPriority() {
-        return priority;
-    }
-
-    public LocalDateTime getStart_date() {
-        return start_date;
-    }
-
-    public LocalDateTime getEnd_date() {
-        return end_date;
-    }
-
-    public LocalDateTime getDeleted_at() {
-        return deleted_at;
-    }
-
-    public AppUser getUser() {
-        return user;
-    }
-
-    public List<Note> getNotes() {
-        return notes;
     }
 
     public void setTitle(String title) {
         this.title = title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Status getStatus() {
+        return status;
     }
 
     public void setStatus(Status status) {
         this.status = status;
     }
 
+    public Priority getPriority() {
+        return priority;
+    }
+
     public void setPriority(Priority priority) {
         this.priority = priority;
     }
 
-    public void setStart_date(LocalDateTime start_date) {
-        this.start_date = start_date;
+    public LocalDateTime getStartAt() {
+        return startAt;
     }
 
-    public void setEnd_date(LocalDateTime end_date) {
-        this.end_date = end_date;
+    public void setStartAt(LocalDateTime startAt) {
+        this.startAt = startAt;
     }
 
-    public void setDeleted_at(LocalDateTime deleted_at) {
-        this.deleted_at = deleted_at;
+    public LocalDateTime getEndAt() {
+        return endAt;
+    }
+
+    public void setEndAt(LocalDateTime endAt) {
+        this.endAt = endAt;
+    }
+
+    public AppUser getUser() {
+        return user;
     }
 
     public void setUser(AppUser user) {
         this.user = user;
+    }
+
+    public List<Note> getNotes() {
+        return notes;
     }
 
     public void setNotes(List<Note> notes) {
@@ -155,24 +131,31 @@ public class Todo extends BaseEntity{
         sb.append(", description=").append(description);
         sb.append(", status=").append(status);
         sb.append(", priority=").append(priority);
-        sb.append(", start_date=").append(start_date);
-        sb.append(", end_date=").append(end_date);
-        sb.append(", deleted_at=").append(deleted_at);
-        sb.append(", user=").append(user);
-        sb.append(", notes=").append(notes);
+        sb.append(", startAt=").append(startAt);
+        sb.append(", endAt=").append(endAt);
         sb.append('}');
         return sb.toString();
     }
 
     @PrePersist
     protected void onCreate() {
-        if(getStart_date() == null){
-            setStart_date(LocalDateTime.now());
+        if(getStartAt() == null){
+            setStartAt(LocalDateTime.now());
         }
-        if(getEnd_date() == null){
-            setEnd_date(getStart_date().plusDays(7));
+        if(getEndAt() == null){
+            setEndAt(getStartAt().plusDays(7));
         }
         
+    }
+
+    public void addNote(Note note) {
+        notes.add(note);
+        note.setTodo(this);
+    }
+
+    public void removeNote(Note note) {
+        notes.remove(note);
+        note.setTodo(null);
     }
 
     

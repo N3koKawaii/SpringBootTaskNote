@@ -1,8 +1,8 @@
 package com.example.tasknote.tasknote.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.tasknote.tasknote.requestDto.RegisterRequest;
 import com.example.tasknote.tasknote.responseDto.UserResponseDTO;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 
 
-@Controller
+@RestController
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;

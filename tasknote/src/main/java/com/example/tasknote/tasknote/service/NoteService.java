@@ -82,7 +82,7 @@ public class NoteService {
         
         note.setTitle(noteCreateRequest.getTitle());
         note.setDescription(noteCreateRequest.getDescription());
-        note.setType(noteCreateRequest.getType());
+        note.setType(noteCreateRequest.getTodoId() != null ? NoteType.TODO_NOTE : noteCreateRequest.getType());
         note.setTodo(todo);
         return toResponseDTO(noteRepository.save(note));
     }
@@ -99,7 +99,7 @@ public class NoteService {
     // **************
 
     // Convert Note entity to NoteResponseDTO
-    private NoteResponseDTO toResponseDTO(Note note){
+    public NoteResponseDTO toResponseDTO(Note note){
         NoteResponseDTO dto = new NoteResponseDTO();
         dto.setId(note.getId());
         dto.setTitle(note.getTitle());

@@ -1,5 +1,7 @@
 package com.example.tasknote.tasknote.model;
 
+import java.util.List;
+
 import com.example.tasknote.tasknote.model_enum.Role;
 
 import jakarta.persistence.Column;
@@ -7,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
@@ -34,16 +38,14 @@ public class AppUser extends BaseEntity{
     @Column(nullable = false)
     private Boolean enabled = true;
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Todo> todos;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Note> notes;
+
     public AppUser(){
         super();
-    }
-
-    public AppUser(String email, String password, Role role, String username) {
-        super();
-        this.email = email;
-        this.password = password;
-        this.role = role;
-        this.username = username;
     }
 
     public String getUsername() {
@@ -97,4 +99,22 @@ public class AppUser extends BaseEntity{
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
+
+    public List<Todo> getTodos() {
+        return todos;
+    }
+
+    public void setTodos(List<Todo> todos) {
+        this.todos = todos;
+    }
+
+    public List<Note> getNotes() {
+        return notes;
+    }
+
+    public void setNotes(List<Note> notes) {
+        this.notes = notes;
+    }
+
+    
 }

@@ -36,15 +36,6 @@ public class Note extends BaseEntity{
         super();
     }
 
-    public Note(String title, String description, Todo todo, NoteType type, AppUser user) {
-        super();
-        this.title = title;
-        this.description = description;
-        this.todo = todo;
-        this.type = type;
-        this.user = user;
-    }
-
     public String getTitle() {
         return title;
     }
@@ -92,8 +83,6 @@ public class Note extends BaseEntity{
         sb.append("title=").append(title);
         sb.append(", description=").append(description);
         sb.append(", type=").append(type);
-        sb.append(", user=").append(user);
-        sb.append(", todo=").append(todo);
         sb.append('}');
         return sb.toString();
     }
