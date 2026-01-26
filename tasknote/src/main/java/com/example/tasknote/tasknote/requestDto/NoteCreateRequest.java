@@ -2,10 +2,12 @@ package com.example.tasknote.tasknote.requestDto;
 
 import com.example.tasknote.tasknote.model_enum.NoteType;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class NoteCreateRequest {
+    @NotBlank
     private String title;
     private String description;
-    private NoteType type = NoteType.STANDALONE;
 
     // optional
     private Long todoId;
@@ -22,7 +24,4 @@ public class NoteCreateRequest {
         return todoId;
     }
 
-    public NoteType getType() {
-        return type;
-    }
 }

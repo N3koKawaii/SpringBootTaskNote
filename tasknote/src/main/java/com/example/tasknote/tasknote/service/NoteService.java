@@ -67,11 +67,18 @@ public class NoteService {
     // Create a new note
     public NoteResponseDTO createNote(NoteCreateRequest noteCreateRequest, AppUser user, Todo todo){
         Note note = new Note();
+
         note.setTitle(noteCreateRequest.getTitle());
         note.setDescription(noteCreateRequest.getDescription());
-        note.setType(noteCreateRequest.getType());
         note.setUser(user);
         note.setTodo(todo);
+
+        if (todo == null){
+            note.setType(NoteType.STANDALONE);
+        } else {
+            note.setType(NoteType.TODO_NOTE);
+        }
+
         return toResponseDTO(noteRepository.save(note));
     }
 
@@ -82,8 +89,13 @@ public class NoteService {
         
         note.setTitle(noteCreateRequest.getTitle());
         note.setDescription(noteCreateRequest.getDescription());
-        note.setType(noteCreateRequest.getTodoId() != null ? NoteType.TODO_NOTE : noteCreateRequest.getType());
         note.setTodo(todo);
+
+        if (todo == null){
+            note.setType(NoteType.STANDALONE);
+        } else {
+            note.setType(NoteType.TODO_NOTE);
+        }
         return toResponseDTO(noteRepository.save(note));
     }
 
@@ -108,5 +120,12 @@ public class NoteService {
         dto.setTodoId(note.getTodo() != null ? note.getTodo().getId() : null);
         dto.setCreatedAt(note.getCreatedAt());
         return dto;
+    }
+
+
+    public boolean isOwner(Long todoId, String username){
+        return noteRepository.findById(todoId)
+                .map(note -> note.getUser().getUsername().equals(username))
+                .orElse(false);
     }
 }

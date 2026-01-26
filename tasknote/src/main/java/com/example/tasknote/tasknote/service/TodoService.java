@@ -144,4 +144,11 @@ public class TodoService {
     }
 
 
+    public boolean isOwner(Long todoId, String username){
+        return todoRepository.findById(todoId)
+                .map(todo -> todo.getUser().getUsername().equals(username))
+                .orElse(false);
+    }
+
+
 }

@@ -1,0 +1,110 @@
+package com.example.tasknote.tasknote.security;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.function.Function;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
+@Component
+public class JwtUtil {
+    private final Key key;
+    private final Long expirationMs;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret,
+                   @Value("${jwt.expiration}") Long expirationMs){
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expirationMs = expirationMs;
+    }
+
+    public String generateToken(UserDetails userDetails){
+        var roles = userDetails.getAuthorities()
+                .stream()
+                .map(Object::toString)
+                .toList();
+        
+        String jti = UUID.randomUUID().toString();
+
+        return Jwts.builder()
+                .setId(jti)
+                .setSubject(userDetails.getUsername())
+                .claim("roles", roles)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    public String generateRefreshToken(UserDetails userDetails, Long refreshExpirationMs){
+        var roles = userDetails.getAuthorities()
+                .stream()
+                .map(Object::toString)
+                .toList();
+        
+        String jti = UUID.randomUUID().toString();
+
+        return Jwts.builder()
+                .setId(jti)
+                .setSubject(userDetails.getUsername())
+                .claim("roles", roles)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    public String extractJti(String token){
+        return extractClaim(token, Claims::getId);
+    }
+
+    public String extractUsername(String token){
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public List<String> extractRoles(String token){
+        List<?> raw = extractClaim(token, c->c.get("roles", List.class));
+        return raw.stream()
+                .map(Object::toString)
+                .toList();
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver){
+        Claims claims = parseClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public Date extractIssuedAt(String token){
+        return extractClaim(token, Claims::getIssuedAt);
+    }
+
+    public Claims parseClaims(String token){
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (JwtException e) {
+            throw new IllegalArgumentException("Invalid JWT token", e);
+        }
+    }
+
+    public boolean validateToken(String token, UserDetails userDetails){
+        Claims claims = parseClaims(token);
+        return claims.getSubject().equals(userDetails.getUsername()) && claims.getExpiration().after(new Date());
+    }
+
+    public boolean isTokenExpired(String token){
+        return extractClaim(token, Claims::getExpiration).before(new Date());
+    }
+}

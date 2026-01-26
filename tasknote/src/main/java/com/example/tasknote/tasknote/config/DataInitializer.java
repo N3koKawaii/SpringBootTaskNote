@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.tasknote.tasknote.model.AppUser;
 import com.example.tasknote.tasknote.model.Note;
@@ -27,13 +28,20 @@ public class DataInitializer implements CommandLineRunner{
     @Autowired
     public NoteRepository noteRepository;
 
+    @Autowired
+    public PasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) throws Exception {
         // Add user
-        AppUser admin = createUser("admin@gmail.com", "admin123", Role.ROLE_ADMIN, "admin");
-        AppUser user1 = createUser("neko@gmail.com", "neko123", Role.ROLE_USER, "neko");
-        AppUser user2 = createUser("neko2@gmail.com", "neko1234", Role.ROLE_USER, "neko2");
+        AppUser admin = createUser("admin@gmail.com", passwordEncoder.encode("admin123"), Role.ADMIN, "admin");
+        AppUser user1 = createUser("neko@gmail.com", passwordEncoder.encode("neko123"), Role.USER, "neko");
+        AppUser user2 = createUser("neko2@gmail.com", passwordEncoder.encode("neko1234"), Role.USER, "neko2");
 
+        // Add Admin Todo
+        Todo adminTodo1 = createTodo("Admin Todo", "This is admin's todo", admin);
+        Todo adminTodo2 = createTodo("Admin Second Todo", "This is admin's second todo", admin);
+        Todo adminTodo3 = createTodo("Admin Third Todo", "This is admin's third todo", admin);
 
         // Add Todo
         Todo todo1 = createTodo("First Todo", "This is the first todo", user1);
@@ -54,6 +62,7 @@ public class DataInitializer implements CommandLineRunner{
         Note note9 = createNote("Ninth Note", "This is the ninth note", todo4, NoteType.TODO_NOTE, user2);
 
         userRepository.saveAll(List.of( admin, user1, user2 ));
+        todoRepository.saveAll(List.of( adminTodo1, adminTodo2, adminTodo3 ));
         todoRepository.saveAll(List.of(todo1, todo2, todo3, todo4, todo5, todo6));
         noteRepository.saveAll(List.of( note1, note2, note3, note4, note5, note6, note7, note8, note9 ));
 

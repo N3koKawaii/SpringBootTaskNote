@@ -2,6 +2,7 @@ package com.example.tasknote.tasknote.util;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class ApiResponse<T>{
     private Boolean success;
@@ -68,7 +69,7 @@ public class ApiResponse<T>{
         this.path = path;
     }
 
-    public static <T> ApiResponse<T> success(T data, String message, String path){
+    public static <T> ApiResponse<T> success(T data, String message){
         ApiResponse<T> response = new ApiResponse<>();
         response.setSuccess(true);
         response.setMessage(message);
@@ -76,7 +77,6 @@ public class ApiResponse<T>{
         response.setErrors(null);
         response.setErrorCode(0); // No error
         response.setTimestamp(System.currentTimeMillis());
-        response.setPath(path);
 
         return response;
     }

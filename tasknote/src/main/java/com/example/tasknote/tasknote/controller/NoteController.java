@@ -3,25 +3,25 @@ package com.example.tasknote.tasknote.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.example.tasknote.tasknote.exception.ResourceNotFoundException;
 import com.example.tasknote.tasknote.model.AppUser;
 import com.example.tasknote.tasknote.model.Todo;
 import com.example.tasknote.tasknote.model_enum.NoteType;
 import com.example.tasknote.tasknote.repository.TodoRepository;
-import com.example.tasknote.tasknote.repository.UserRepository;
 import com.example.tasknote.tasknote.requestDto.NoteCreateRequest;
 import com.example.tasknote.tasknote.responseDto.NoteResponseDTO;
+import com.example.tasknote.tasknote.service.CurrentUserService;
 import com.example.tasknote.tasknote.service.NoteService;
 import com.example.tasknote.tasknote.util.ApiResponse;
 
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,69 +31,65 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 
 @RestController
-@RequestMapping("/notes")
+@RequestMapping("/notes/")
 public class NoteController {
     private final NoteService noteService;
     private final TodoRepository todoRepository;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
-    public NoteController(NoteService noteService, TodoRepository todoRepository, UserRepository userRepository){
+    public NoteController(NoteService noteService, TodoRepository todoRepository, CurrentUserService currentUserService){
         this.noteService = noteService;
         this.todoRepository = todoRepository;
-        this.userRepository = userRepository;
+        this.currentUserService = currentUserService;
     }
 
-    @GetMapping("/")
-    public ResponseEntity<ApiResponse<List<NoteResponseDTO>>> getAllNotes(
-        @RequestParam String username,
-        HttpServletRequest request) {
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NoteResponseDTO>>> getAllNotes() {
 
-        String path = request.getRequestURI();
-
-        AppUser user = userRepository.findByUsername(username)
-                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        AppUser user = currentUserService.getCurrentUser();
 
         List<NoteResponseDTO> notesDto = noteService.getAllNotes(user);
 
         return ResponseEntity.ok(
             ApiResponse.success(
                 notesDto,
-                "Fetched notes successfully",
-                path
+                "Fetched notes successfully"
             )
         );
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<NoteResponseDTO>> getNotebyId(
-                            @PathVariable Long id,
-                            @RequestParam String username,
-                            HttpServletRequest request) {
-        String path = request.getRequestURI();
+    @GetMapping("/id/{id}")
+    public ResponseEntity<ApiResponse<NoteResponseDTO>> getNotebyId(@PathVariable Long id) {
 
-        AppUser user = userRepository.findByUsername(username)
-                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        AppUser user = currentUserService.getCurrentUser();
         NoteResponseDTO noteDto = noteService.getNoteById(id, user);
 
         return ResponseEntity.ok(
             ApiResponse.success(
                 noteDto,
-                "Fetched note successfully",
-                path
+                "Fetched note successfully"
+            )
+        );
+    }
+
+    @GetMapping("/type/{type}")
+    public ResponseEntity<ApiResponse<List<NoteResponseDTO>>> getNoteByType(@PathVariable NoteType type) {
+
+        AppUser user = currentUserService.getCurrentUser();
+        List<NoteResponseDTO> notesDto = noteService.listAllNotesByType(user, type);
+
+        return ResponseEntity.ok(
+            ApiResponse.success(
+                notesDto,
+                "Fetched notes by type successfully"
             )
         );
     }
 
     @GetMapping("/todo/{todoId}")
-    public ResponseEntity<ApiResponse<List<NoteResponseDTO>>> getNotesByTodo(
-        @PathVariable Long todoId,
-        @RequestParam String username,
-        HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<List<NoteResponseDTO>>> getNotesByTodo(@PathVariable Long todoId) {
 
-        String path = request.getRequestURI();
-
-        AppUser user = userRepository.findByUsername(username)
-                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        AppUser user = currentUserService.getCurrentUser();
 
         Todo todo = todoRepository.findByIdAndUser(todoId, user)
                         .orElseThrow(() -> new ResourceNotFoundException("Todo not found"));
@@ -103,43 +99,17 @@ public class NoteController {
         return ResponseEntity.ok(
             ApiResponse.success(
                 notesDto,
-                "Fetched notes by todo successfully",
-                path
+                "Fetched notes by todo successfully"
             )
         );
     }
 
-    @GetMapping("/{type}")
-    public ResponseEntity<ApiResponse<List<NoteResponseDTO>>> getNoteByType(
-        @PathVariable NoteType type,
-        @RequestParam String username,
-        HttpServletRequest request) {
-        String path = request.getRequestURI();
+    
 
-        AppUser user = userRepository.findByUsername(username)
-                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    @PostMapping
+    public ResponseEntity<ApiResponse<NoteResponseDTO>> createNote(@Valid @RequestBody NoteCreateRequest noteCreateRequest) {
 
-        List<NoteResponseDTO> notesDto = noteService.listAllNotesByType(user, type);
-
-        return ResponseEntity.ok(
-            ApiResponse.success(
-                notesDto,
-                "Fetched notes by type successfully",
-                path
-            )
-        );
-    }
-
-    @PostMapping("/createNote")
-    public ResponseEntity<ApiResponse<NoteResponseDTO>> createNote(
-        @RequestBody NoteCreateRequest noteCreateRequest,
-        @RequestParam String username,
-        HttpServletRequest request) {
-
-        String path = request.getRequestURI();
-
-        AppUser user = userRepository.findByUsername(username)
-                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        AppUser user = currentUserService.getCurrentUser();
 
         Todo todo = null;
         if (noteCreateRequest.getTodoId() != null){
@@ -152,23 +122,17 @@ public class NoteController {
         return ResponseEntity.ok(
             ApiResponse.success(
                 noteDto,
-                "Created note successfully",
-                path
+                "Created note successfully"
             )
         );
     }
 
-    @PutMapping("/updateNote/{id}")
+    @PutMapping("/{noteId}")
     public ResponseEntity<ApiResponse<NoteResponseDTO>> updateNote(
-        @PathVariable Long id,
-        @RequestBody NoteCreateRequest noteCreateRequest,
-        @RequestParam String username,
-        HttpServletRequest request) {
-        
-        String path = request.getRequestURI();
+        @PathVariable Long noteId,
+        @Valid @RequestBody NoteCreateRequest noteCreateRequest) {
 
-        AppUser user = userRepository.findByUsername(username)
-                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        AppUser user = currentUserService.getCurrentUser();
 
         Todo todo = null;
         if (noteCreateRequest.getTodoId() != null){
@@ -176,34 +140,27 @@ public class NoteController {
                             .orElseThrow(() -> new ResourceNotFoundException("Todo not found"));
         }
 
-        NoteResponseDTO noteDto = noteService.updateNote(id, noteCreateRequest, user, todo);
+        NoteResponseDTO noteDto = noteService.updateNote(noteId, noteCreateRequest, user, todo);
 
         return ResponseEntity.ok(
             ApiResponse.success(
                 noteDto,
-                "Updated note successfully",
-                path
+                "Updated note successfully"
             )
         );
     }
 
-    @DeleteMapping("/deleteNote/{id}")
-    public ResponseEntity<ApiResponse<String>> deleteNote(
-        @PathVariable Long id,
-        @RequestParam String username,
-        HttpServletRequest request
-    ){
-        String path = request.getRequestURI();
+    @DeleteMapping("/{noteId}")
+    @PreAuthorize("hasRole('ADMIN') or @noteService.isOwner(#noteId, principal.username)")
+    public ResponseEntity<ApiResponse<String>> deleteNote(@PathVariable Long noteId){
 
-        AppUser user = userRepository.findByUsername(username)
-                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        noteService.deleteNote(id, user);
+        AppUser user = currentUserService.getCurrentUser();
+        noteService.deleteNote(noteId, user);
 
         return ResponseEntity.ok(
             ApiResponse.success(
                 "",
-                "Note deleted successfully",
-                path
+                "Note deleted successfully"
             )
         );
 
